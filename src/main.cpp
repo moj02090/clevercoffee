@@ -151,8 +151,6 @@ Relay valveRelay(valveRelayPin, PUMP_VALVE_SSR_TYPE);
 Switch* powerSwitch;
 Switch* brewSwitch;
 Switch* steamSwitch;
-
-//TL
 Switch* waterSwitch;
 
 TempSensor* tempSensor;
@@ -413,8 +411,6 @@ Timer printDisplayTimer(&printScreen, 100);
 #include "powerHandler.h"
 #include "scaleHandler.h"
 #include "steamHandler.h"
-
-//TL
 #include "waterHandler.h"
 
 // Emergency stop if temp is too high
@@ -1734,7 +1730,6 @@ void looppid() {
     }
 #endif
 
-    //TL
     checkWaterSwitch();
     checkSteamSwitch();
     checkPowerSwitch();
