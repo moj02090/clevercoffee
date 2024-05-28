@@ -700,7 +700,6 @@ void handleMachineState() {
                 machineState = kSteam;
             }
 
-
             if (emergencyStop) {
                 machineState = kEmergencyStop;
             }
