@@ -661,21 +661,17 @@ void handleMachineState() {
             }
             break;
 
-        case kSteam:
-            if (steamON == 0) {
+        case kWater:
+            if (waterON == 0) {
                 machineState = kPidNormal;
             }
 
-            if (waterON == 1) {
-                machineState = kWater;
+            if (steamON == 1) {
+                machineState = kSteam;
             }
 
             if (emergencyStop) {
                 machineState = kEmergencyStop;
-            }
-
-            if (backflushOn || backflushState > kBackflushWaitBrewswitchOn) {
-                machineState = kBackflush;
             }
 
             if (pidON == 0) {
@@ -691,17 +687,21 @@ void handleMachineState() {
             }
             break;
 
-        case kWater:
-            if (waterON == 0) {
-                machineState = kPidNormal;
+        case kSteam:
+            if (waterON == 1) {
+                machineState = kWater;
             }
 
-            if (steamON == 1) {
-                machineState = kSteam;
+            if (steamON == 0) {
+                machineState = kPidNormal;
             }
 
             if (emergencyStop) {
                 machineState = kEmergencyStop;
+            }
+
+            if (backflushOn || backflushState > kBackflushWaitBrewswitchOn) {
+                machineState = kBackflush;
             }
 
             if (pidON == 0) {
@@ -876,6 +876,8 @@ char const* machinestateEnumToString(MachineState machineState) {
             return "Steam";
         case kWater:
             return "Water";
+        case kSteam:
+            return "Steam";
         case kBackflush:
             return "Backflush";
         case kWaterEmpty:
