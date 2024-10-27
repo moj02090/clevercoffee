@@ -303,10 +303,11 @@ double previousInput = 0;
 enum SectionNames {
     sPIDSection,
     sTempSection,
-    sBDSection,
+    sBrewPidSection,
     sBrewSection,
     sScaleSection,
     sDisplaySection,
+    sMaintenanceSection,
     sPowerSection,
     sOtherSection
 };
@@ -733,7 +734,6 @@ void handleMachineState() {
 
         case kPidDisabled:
             if (pidON == 1) {
-                // Enter regular PID operations
                 machineState = kPidNormal;
             }
 
@@ -777,29 +777,43 @@ void handleMachineState() {
 #if OLED_DISPLAY != 0
                 u8g2.setPowerSave(0);
 #endif
-
-                if (manualFlush()) {
-                    pidON = 1;
-                    resetStandbyTimer();
-#if OLED_DISPLAY != 0
-                    u8g2.setPowerSave(0);
-#endif
-                }
-
-                if (tempSensor->hasError()) {
-                    machineState = kSensorError;
-                }
-                break;
-
-                case kSensorError:
-                    machineState = kSensorError;
-                    break;
-
-                case kEepromError:
-                    machineState = kEepromError;
-                    break;
+                machineState = kBrew;
             }
+
+            if (manualFlush()) {
+                pidON = 1;
+                resetStandbyTimer();
+#if OLED_DISPLAY != 0
+                u8g2.setPowerSave(0);
+#endif
+                machineState = kManualFlush;
+            }
+
+            if (backflushOn) {
+                resetStandbyTimer();
+#if OLED_DISPLAY != 0
+                u8g2.setPowerSave(0);
+#endif
+                machineState = kBackflush;
+            }
+
+            if (tempSensor->hasError()) {
+#if OLED_DISPLAY != 0
+                u8g2.setPowerSave(0);
+#endif
+                machineState = kSensorError;
+            }
+            break;
+
+        case kSensorError:
+            machineState = kSensorError;
+            break;
+
+        case kEepromError:
+            machineState = kEepromError;
+            break;
     }
+
     if (machineState != lastmachinestate) {
         printMachineState();
         lastmachinestate = machineState;
@@ -1129,7 +1143,7 @@ void setup() {
                                         .hasHelpText = true,
                                         .helpText = "Number of cycles of filling and flushing during a backflush",
                                         .type = kInteger,
-                                        .section = sBrewSection,
+                                        .section = sMaintenanceSection,
                                         .position = 18,
                                         .show = [] { return true && featureBrewControl == 1; },
                                         .minValue = BACKFLUSH_CYCLES_MIN,
@@ -1140,7 +1154,7 @@ void setup() {
                                            .hasHelpText = true,
                                            .helpText = "Time in seconds the pump is running during one backflush cycle",
                                            .type = kDouble,
-                                           .section = sBrewSection,
+                                           .section = sMaintenanceSection,
                                            .position = 19,
                                            .show = [] { return true && featureBrewControl == 1; },
                                            .minValue = BACKFLUSH_FILL_TIME_MIN,
@@ -1151,7 +1165,7 @@ void setup() {
                                             .hasHelpText = true,
                                             .helpText = "Time in seconds the selenoid valve stays open during one backflush cycle",
                                             .type = kDouble,
-                                            .section = sBrewSection,
+                                            .section = sMaintenanceSection,
                                             .position = 20,
                                             .show = [] { return true && featureBrewControl == 1; },
                                             .minValue = BACKFLUSH_FLUSH_TIME_MIN,
@@ -1176,7 +1190,7 @@ void setup() {
                                                   "high brew temperatures with boiler machines like Rancilio "
                                                   "Silvia. Set to 0 for thermoblock machines."),
                                     .type = kDouble,
-                                    .section = sBDSection,
+                                    .section = sBrewPidSection,
                                     .position = 22,
                                     .show = [] { return true; },
                                     .minValue = BREW_PID_DELAY_MIN,
@@ -1187,7 +1201,7 @@ void setup() {
                                  .hasHelpText = true,
                                  .helpText = F("Use separate PID parameters while brew is running"),
                                  .type = kUInt8,
-                                 .section = sBDSection,
+                                 .section = sBrewPidSection,
                                  .position = 23,
                                  .show = [] { return true && FEATURE_BREWSWITCH == 1; },
                                  .minValue = 0,
@@ -1205,7 +1219,7 @@ void setup() {
                                                "installation-eines-temperatursensors-in-silvia-bruehgruppe.111093/"
                                                "#post-1453641' target='_blank'>Details<a>)"),
                                  .type = kDouble,
-                                 .section = sBDSection,
+                                 .section = sBrewPidSection,
                                  .position = 24,
                                  .show = [] { return true && FEATURE_BREWSWITCH == 1 && useBDPID; },
                                  .minValue = PID_KP_BD_MIN,
@@ -1217,7 +1231,7 @@ void setup() {
                                  .helpText = F("Integral time constant (in seconds) for the PID when "
                                                "brewing has been detected."),
                                  .type = kDouble,
-                                 .section = sBDSection,
+                                 .section = sBrewPidSection,
                                  .position = 25,
                                  .show = [] { return true && FEATURE_BREWSWITCH == 1 && useBDPID; },
                                  .minValue = PID_TN_BD_MIN,
@@ -1229,7 +1243,7 @@ void setup() {
                                  .helpText = F("Differential time constant (in seconds) for the PID "
                                                "when brewing has been detected."),
                                  .type = kDouble,
-                                 .section = sBDSection,
+                                 .section = sBrewPidSection,
                                  .position = 26,
                                  .show = [] { return true && FEATURE_BREWSWITCH == 1 && useBDPID; },
                                  .minValue = PID_TV_BD_MIN,
@@ -1681,7 +1695,6 @@ void looppid() {
     }
 
     updateStandbyTimer();
-
     handleMachineState();
 
     // Check if PID should run or not. If not, set to manual and force output to zero
@@ -1726,7 +1739,7 @@ void looppid() {
         }
     }
 
-    // BD PID
+    // Brew PID
     if (machineState == kBrew) {
         if (brewPIDDelay > 0 && timeBrewed > 0 && timeBrewed < brewPIDDelay * 1000) {
             // disable PID for brewPIDDelay seconds, enable PID again with new tunings after that
@@ -1762,7 +1775,6 @@ void looppid() {
 
         bPID.SetTunings(steamKp, 0, 0, 1);
     }
-    // sensor error OR Emergency Stop
 }
 
 void loopLED() {
