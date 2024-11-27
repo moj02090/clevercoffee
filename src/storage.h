@@ -46,6 +46,7 @@ typedef enum {
     STO_ITEM_BACKFLUSH_CYCLES,          // number of cycles the backflush should run
     STO_ITEM_BACKFLUSH_FILL_TIME,       // time in ms the pump is running during backflush
     STO_ITEM_BACKFLUSH_FLUSH_TIME,      // time in ms the 3-way valve is open during backflush
+    STO_ITEM_PID_ON_ON_WATEREMPTY,      // PID on/off when water empty
 
     /* WHEN ADDING NEW ITEMS, THE FOLLOWING HAS TO BE UPDATED:
      * - storage structure:  sto_data_t
@@ -74,7 +75,7 @@ typedef struct __attribute__((packed)) {
         uint8_t reserved1[2];
         double pidTnRegular;
         uint8_t pidOn;
-        uint8_t freeToUse1;
+        uint8_t pidOnOnWaterEmpty;
         double pidTvRegular;
         double pidIMaxRegular;
         uint8_t freeToUse2;
@@ -125,7 +126,7 @@ static const sto_data_t itemDefaults PROGMEM = {
     {0xFF, 0xFF},                                                                                                                   // reserved (maybe for structure version)
     AGGTN,                                                                                                                          // STO_ITEM_PID_TN_REGULAR
     0,                                                                                                                              // STO_ITEM_PID_ON
-    0xFF,                                                                                                                           // free to use
+    PID_ON_ON_WATEREMPTY,                                                                                                                           // free to use
     AGGTV,                                                                                                                          // STO_ITEM_PID_TV_REGULAR
     AGGIMAX,                                                                                                                        // STO_ITEM_PID_I_MAX_REGULAR
     0xFF,                                                                                                                           // free to use
@@ -357,6 +358,11 @@ static inline int32_t getItemAddr(sto_item_id_t itemId, uint16_t* maxItemSize = 
         case STO_ITEM_BACKFLUSH_FLUSH_TIME:
             addr = offsetof(sto_data_t, backflushFlushTimeMs);
             size = STRUCT_MEMBER_SIZE(sto_data_t, backflushFlushTimeMs);
+            break;
+
+        case STO_ITEM_PID_ON_ON_WATEREMPTY:
+            addr = offsetof(sto_data_t, pidOnOnWaterEmpty);
+            size = STRUCT_MEMBER_SIZE(sto_data_t, pidOnOnWaterEmpty);
             break;
 
         default:
