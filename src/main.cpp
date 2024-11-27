@@ -248,7 +248,7 @@ double standbyModeTime = STANDBY_MODE_TIME;
 
 // system parameter EEPROM storage wrappers (current value as pointer to variable, minimum, maximum, optional storage ID)
 SysPara<uint8_t> sysParaPidOn(&pidON, 0, 1, STO_ITEM_PID_ON);
-SysPara<uint8_t> sysParapidONAtWaterEmpty(&pidONAtWaterEmpty, 0, 1, STO_ITEM_PID_ON_AT_WATEREMPTY);
+SysPara<uint8_t> sysParaPidOnAtWaterEmpty(&pidONAtWaterEmpty, 0, 1, STO_ITEM_PID_ON_AT_WATEREMPTY);
 SysPara<uint8_t> sysParaUsePonM(&usePonM, 0, 1, STO_ITEM_PID_START_PONM);
 SysPara<double> sysParaPidKpStart(&startKp, PID_KP_START_MIN, PID_KP_START_MAX, STO_ITEM_PID_KP_START);
 SysPara<double> sysParaPidTnStart(&startTn, PID_TN_START_MIN, PID_TN_START_MAX, STO_ITEM_PID_TN_START);
@@ -1903,7 +1903,7 @@ void looppid() {
     printDisplayTimer();
 #endif
 
-    if (machineState == kPidDisabled || (machineState == kWaterEmpty && !pidOnAtWaterEmpty ) || machineState == kSensorError || machineState == kEmergencyStop || machineState == kEepromError || machineState == kStandby || brewPIDDisabled) {
+    if (machineState == kPidDisabled || (machineState == kWaterEmpty && !pidONAtWaterEmpty ) || machineState == kSensorError || machineState == kEmergencyStop || machineState == kEepromError || machineState == kStandby || brewPIDDisabled) {
         if (bPID.GetMode() == 1) {
             // Force PID shutdown
             bPID.SetMode(0);
