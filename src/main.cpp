@@ -1141,10 +1141,26 @@ void setup() {
     // Initialize the logger
     Logger::init(23);
 
-    editableVars["PID_ON"] = {
-        .displayName = "Enable PID Controller", .hasHelpText = false, .helpText = "", .type = kUInt8, .section = sPIDSection, .position = 1, .show = [] { return true; }, .minValue = 0, .maxValue = 1, .ptr = (void*)&pidON};
-    editableVars["PID_ON_AT_WATEREMPTY"] = {
-        .displayName = "Enable heating while water tank is empty", .hasHelpText = true, .helpText = F("If checked, the PID stays enabled during waterEmpty state."), .type = kUInt8, .section = sPIDSection, .position = 2, .show = [] { return true && FEATURE_WATER_SENS == 1; }, .minValue = 0, .maxValue = 1, .ptr = (void*)&pidONAtWaterEmpty};
+    editableVars["PID_ON"] = {.displayName = "Enable PID Controller",
+                                      .hasHelpText = false,
+                                      .helpText = "",
+                                      .type = kUInt8,
+                                      .section = sPIDSection,
+                                      .position = 1,
+                                      .show = [] { return true; },
+                                      .minValue = 0,
+                                      .maxValue = 1,
+                                      .ptr = (void*)&pidON};
+    editableVars["PID_ON_AT_WATEREMPTY"] = {.displayName = "Enable heating while water tank is empty",
+                                      .hasHelpText = true,
+                                      .helpText = F("If checked, the PID stays enabled during waterEmpty state."),
+                                      .type = kUInt8,
+                                      .section = sPIDSection,
+                                      .position = 2,
+                                      .show = [] { return true && FEATURE_WATER_SENS == 1; },
+                                      .minValue = 0,
+                                      .maxValue = 1,
+                                      .ptr = (void*)&pidONAtWaterEmpty};
     editableVars["START_USE_PONM"] = {.displayName = F("Enable PonM"),
                                       .hasHelpText = true,
                                       .helpText = F("Use PonM mode (<a href='http://brettbeauregard.com/blog/2017/06/"
