@@ -1577,7 +1577,6 @@ void setup() {
 
     // Editable values reported to MQTT
     mqttVars["pidON"] = [] { return &editableVars.at("PID_ON"); };
-    mqttVars["pidONAtWaterEmpty"] = [] { return &editableVars.at("PID_ON_AT_WATEREMPTY"); };
     mqttVars["brewSetpoint"] = [] { return &editableVars.at("BREW_SETPOINT"); };
     mqttVars["brewTempOffset"] = [] { return &editableVars.at("BREW_TEMP_OFFSET"); };
     mqttVars["steamON"] = [] { return &editableVars.at("STEAM_MODE"); };
@@ -1593,6 +1592,11 @@ void setup() {
     mqttVars["aggIMax"] = [] { return &editableVars.at("PID_I_MAX"); };
     mqttVars["steamKp"] = [] { return &editableVars.at("STEAM_KP"); };
     mqttVars["standbyModeOn"] = [] { return &editableVars.at("STANDBY_MODE_ON"); };
+
+    if (FEATURE_WATER_SENS == 1) {
+        mqttVars["pidONAtWaterEmpty"] = [] { return &editableVars.at("PID_ON_AT_WATEREMPTY"); };
+    }
+
 
     if (FEATURE_BREWCONTROL == 1) {
         mqttVars["brewtime"] = [] { return &editableVars.at("BREW_TIME"); };
@@ -1642,6 +1646,7 @@ void setup() {
 #if FEATURE_SCALE == 1
     mqttSensors["currentWeight"] = [] { return weight; };
 #endif
+
 
     initTimer1();
 
