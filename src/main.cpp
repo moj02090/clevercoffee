@@ -203,6 +203,7 @@ void resetStandbyTimer(void);
 
 // system parameters
 uint8_t pidON = 0; // 1 = control loop in closed loop
+uint8_t pidONAtWaterEmpty = PID_ON_AT_WATEREMPTY;
 double brewSetpoint = SETPOINT;
 double brewTempOffset = TEMPOFFSET;
 double setpoint = brewSetpoint;
@@ -247,6 +248,7 @@ double standbyModeTime = STANDBY_MODE_TIME;
 
 // system parameter EEPROM storage wrappers (current value as pointer to variable, minimum, maximum, optional storage ID)
 SysPara<uint8_t> sysParaPidOn(&pidON, 0, 1, STO_ITEM_PID_ON);
+SysPara<uint8_t> sysParapidONAtWaterEmpty(&pidONAtWaterEmpty, 0, 1, STO_ITEM_PID_ON_AT_WATEREMPTY);
 SysPara<uint8_t> sysParaUsePonM(&usePonM, 0, 1, STO_ITEM_PID_START_PONM);
 SysPara<double> sysParaPidKpStart(&startKp, PID_KP_START_MIN, PID_KP_START_MAX, STO_ITEM_PID_KP_START);
 SysPara<double> sysParaPidTnStart(&startTn, PID_TN_START_MIN, PID_TN_START_MAX, STO_ITEM_PID_TN_START);
@@ -902,7 +904,7 @@ void handleMachineState() {
                 machineState = kPidDisabled;
             }
 
-            if (!waterFull) {
+            if (!waterFull ) {
                 machineState = kWaterEmpty;
             }
 
@@ -948,7 +950,7 @@ void handleMachineState() {
             break;
 
         case kWaterEmpty:
-            if (waterFull) {
+            if (waterFull ) {
                 machineState = kPidNormal;
             }
 
@@ -1141,7 +1143,8 @@ void setup() {
 
     editableVars["PID_ON"] = {
         .displayName = "Enable PID Controller", .hasHelpText = false, .helpText = "", .type = kUInt8, .section = sPIDSection, .position = 1, .show = [] { return true; }, .minValue = 0, .maxValue = 1, .ptr = (void*)&pidON};
-
+    editableVars["PID_ON_AT_WATEREMPTY"] = {
+        .displayName = "Enable PID Controller at empty Water", .hasHelpText = false, .helpText = "", .type = kUInt8, .section = sPIDSection, .position = 2, .show = [] { return true; }, .minValue = 0, .maxValue = 1, .ptr = (void*)&pidONAtWaterEmpty};
     editableVars["START_USE_PONM"] = {.displayName = F("Enable PonM"),
                                       .hasHelpText = true,
                                       .helpText = F("Use PonM mode (<a href='http://brettbeauregard.com/blog/2017/06/"
@@ -1150,7 +1153,7 @@ void setup() {
                                                     "Otherwise, just use the same PID values that are used later"),
                                       .type = kUInt8,
                                       .section = sPIDSection,
-                                      .position = 2,
+                                      .position = 3,
                                       .show = [] { return true; },
                                       .minValue = 0,
                                       .maxValue = 1,
@@ -1165,7 +1168,7 @@ void setup() {
                                               "other out when the target temperature is reached."),
                                 .type = kDouble,
                                 .section = sPIDSection,
-                                .position = 3,
+                                .position = 4,
                                 .show = [] { return true && usePonM; },
                                 .minValue = PID_KP_START_MIN,
                                 .maxValue = PID_KP_START_MAX,
@@ -1178,7 +1181,7 @@ void setup() {
                                               "introducing-proportional-on-measurement/' target='_blank'>details</a>)"),
                                 .type = kDouble,
                                 .section = sPIDSection,
-                                .position = 4,
+                                .position = 5,
                                 .show = [] { return true && usePonM; },
                                 .minValue = PID_TN_START_MIN,
                                 .maxValue = PID_TN_START_MAX,
@@ -1193,7 +1196,7 @@ void setup() {
                                             "difference. E.g. 5°C difference will result in P*5 Watts of heater output."),
                               .type = kDouble,
                               .section = sPIDSection,
-                              .position = 5,
+                              .position = 6,
                               .show = [] { return true; },
                               .minValue = PID_KP_REGULAR_MIN,
                               .maxValue = PID_KP_REGULAR_MAX,
@@ -1209,7 +1212,7 @@ void setup() {
                                             "proportional action. The smaller this value, the faster the integral term changes."),
                               .type = kDouble,
                               .section = sPIDSection,
-                              .position = 6,
+                              .position = 7,
                               .show = [] { return true; },
                               .minValue = PID_TN_REGULAR_MIN,
                               .maxValue = PID_TN_REGULAR_MAX,
@@ -1224,7 +1227,7 @@ void setup() {
                                             "if it is set too high or too low."),
                               .type = kDouble,
                               .section = sPIDSection,
-                              .position = 7,
+                              .position = 8,
                               .show = [] { return true; },
                               .minValue = PID_TV_REGULAR_MIN,
                               .maxValue = PID_TV_REGULAR_MAX,
@@ -1237,7 +1240,7 @@ void setup() {
                                                "setpoint has been reached and is depending on machine type and whether the boiler is insulated or not."),
                                  .type = kDouble,
                                  .section = sPIDSection,
-                                 .position = 8,
+                                 .position = 9,
                                  .show = [] { return true; },
                                  .minValue = PID_I_MAX_REGULAR_MIN,
                                  .maxValue = PID_I_MAX_REGULAR_MAX,
@@ -1248,7 +1251,7 @@ void setup() {
                                 .helpText = F("Proportional gain for the steaming mode (I or D are not used)"),
                                 .type = kDouble,
                                 .section = sPIDSection,
-                                .position = 9,
+                                .position = 10,
                                 .show = [] { return true; },
                                 .minValue = PID_KP_STEAM_MIN,
                                 .maxValue = PID_KP_STEAM_MAX,
@@ -1259,7 +1262,7 @@ void setup() {
                             .helpText = "",
                             .type = kDouble,
                             .section = sPIDSection,
-                            .position = 10,
+                            .position = 11,
                             .show = [] { return false; },
                             .minValue = 0,
                             .maxValue = 200,
@@ -1270,7 +1273,7 @@ void setup() {
                                      .helpText = F("The temperature that the PID will attempt to reach and hold"),
                                      .type = kDouble,
                                      .section = sTempSection,
-                                     .position = 11,
+                                     .position = 12,
                                      .show = [] { return true; },
                                      .minValue = BREW_SETPOINT_MIN,
                                      .maxValue = BREW_SETPOINT_MAX,
@@ -1284,7 +1287,7 @@ void setup() {
                                                       "so that the setpoint represents the approximate brew temperature."),
                                         .type = kDouble,
                                         .section = sTempSection,
-                                        .position = 12,
+                                        .position = 13,
                                         .show = [] { return true; },
                                         .minValue = BREW_TEMP_OFFSET_MIN,
                                         .maxValue = BREW_TEMP_OFFSET_MAX,
@@ -1295,7 +1298,7 @@ void setup() {
                                       .helpText = F("The temperature that the PID will use for steam mode"),
                                       .type = kDouble,
                                       .section = sTempSection,
-                                      .position = 13,
+                                      .position = 14,
                                       .show = [] { return true; },
                                       .minValue = STEAM_SETPOINT_MIN,
                                       .maxValue = STEAM_SETPOINT_MAX,
@@ -1306,7 +1309,7 @@ void setup() {
                                  .helpText = F("Stop brew after this time. Set to 0 to deactivate brew-by-time-feature."),
                                  .type = kDouble,
                                  .section = sBrewSection,
-                                 .position = 14,
+                                 .position = 15,
                                  .show = [] { return true && FEATURE_BREWCONTROL == 1; },
                                  .minValue = BREW_TIME_MIN,
                                  .maxValue = BREW_TIME_MAX,
@@ -1317,7 +1320,7 @@ void setup() {
                                              .helpText = "",
                                              .type = kDouble,
                                              .section = sBrewSection,
-                                             .position = 15,
+                                             .position = 16,
                                              .show = [] { return true && FEATURE_BREWCONTROL == 1; },
                                              .minValue = PRE_INFUSION_PAUSE_MIN,
                                              .maxValue = PRE_INFUSION_PAUSE_MAX,
@@ -1328,7 +1331,7 @@ void setup() {
                                         .helpText = "",
                                         .type = kDouble,
                                         .section = sBrewSection,
-                                        .position = 16,
+                                        .position = 17,
                                         .show = [] { return true && FEATURE_BREWCONTROL == 1; },
                                         .minValue = PRE_INFUSION_TIME_MIN,
                                         .maxValue = PRE_INFUSION_TIME_MAX,
@@ -1339,7 +1342,7 @@ void setup() {
                                         .helpText = "Number of cycles of filling and flushing during a backflush",
                                         .type = kInteger,
                                         .section = sBrewSection,
-                                        .position = 17,
+                                        .position = 18,
                                         .show = [] { return true && FEATURE_BREWCONTROL == 1; },
                                         .minValue = BACKFLUSH_CYCLES_MIN,
                                         .maxValue = BACKFLUSH_CYCLES_MAX,
@@ -1350,7 +1353,7 @@ void setup() {
                                            .helpText = "Time in seconds the pump is running during one backflush cycle",
                                            .type = kDouble,
                                            .section = sBrewSection,
-                                           .position = 18,
+                                           .position = 19,
                                            .show = [] { return true && FEATURE_BREWCONTROL == 1; },
                                            .minValue = BACKFLUSH_FILL_TIME_MIN,
                                            .maxValue = BACKFLUSH_FILL_TIME_MAX,
@@ -1361,7 +1364,7 @@ void setup() {
                                             .helpText = "Time in seconds the selenoid valve stays open during one backflush cycle",
                                             .type = kDouble,
                                             .section = sBrewSection,
-                                            .position = 19,
+                                            .position = 20,
                                             .show = [] { return true && FEATURE_BREWCONTROL == 1; },
                                             .minValue = BACKFLUSH_FLUSH_TIME_MIN,
                                             .maxValue = BACKFLUSH_FLUSH_TIME_MAX,
@@ -1372,7 +1375,7 @@ void setup() {
                                             .helpText = F("Brew is running until this weight has been measured. Set to 0 to deactivate brew-by-weight-feature."),
                                             .type = kDouble,
                                             .section = sBrewSection,
-                                            .position = 20,
+                                            .position = 21,
                                             .show = [] { return true && FEATURE_SCALE == 1; },
                                             .minValue = WEIGHTSETPOINT_MIN,
                                             .maxValue = WEIGHTSETPOINT_MAX,
@@ -1386,7 +1389,7 @@ void setup() {
                                                   "Silvia. Set to 0 for thermoblock machines."),
                                     .type = kDouble,
                                     .section = sBDSection,
-                                    .position = 21,
+                                    .position = 22,
                                     .show = [] { return true; },
                                     .minValue = BREW_PID_DELAY_MIN,
                                     .maxValue = BREW_PID_DELAY_MAX,
@@ -1397,7 +1400,7 @@ void setup() {
                                  .helpText = F("Use separate PID parameters while brew is running"),
                                  .type = kUInt8,
                                  .section = sBDSection,
-                                 .position = 22,
+                                 .position = 23,
                                  .show = [] { return true && FEATURE_BREWDETECTION == 1; },
                                  .minValue = 0,
                                  .maxValue = 1,
@@ -1415,7 +1418,7 @@ void setup() {
                                                "#post-1453641' target='_blank'>Details<a>)"),
                                  .type = kDouble,
                                  .section = sBDSection,
-                                 .position = 23,
+                                 .position = 24,
                                  .show = [] { return true && FEATURE_BREWDETECTION == 1 && useBDPID; },
                                  .minValue = PID_KP_BD_MIN,
                                  .maxValue = PID_KP_BD_MAX,
@@ -1427,7 +1430,7 @@ void setup() {
                                                "brewing has been detected."),
                                  .type = kDouble,
                                  .section = sBDSection,
-                                 .position = 24,
+                                 .position = 25,
                                  .show = [] { return true && FEATURE_BREWDETECTION == 1 && useBDPID; },
                                  .minValue = PID_TN_BD_MIN,
                                  .maxValue = PID_TN_BD_MAX,
@@ -1439,7 +1442,7 @@ void setup() {
                                                "when brewing has been detected."),
                                  .type = kDouble,
                                  .section = sBDSection,
-                                 .position = 25,
+                                 .position = 26,
                                  .show = [] { return true && FEATURE_BREWDETECTION == 1 && useBDPID; },
                                  .minValue = PID_TV_BD_MIN,
                                  .maxValue = PID_TV_BD_MAX,
@@ -1451,7 +1454,7 @@ void setup() {
                                                  "enabled (also after Brew switch is inactive again)."),
                                    .type = kDouble,
                                    .section = sBDSection,
-                                   .position = 26,
+                                   .position = 27,
                                    .show = [] { return true && FEATURE_BREWDETECTION == 1 && (useBDPID || BREWDETECTION_TYPE == 1); },
                                    .minValue = BREW_SW_TIME_MIN,
                                    .maxValue = BREW_SW_TIME_MAX,
@@ -1465,24 +1468,24 @@ void setup() {
                                                         "Needs to be &gt;0 also for Hardware switch detection."),
                                           .type = kDouble,
                                           .section = sBDSection,
-                                          .position = 27,
+                                          .position = 28,
                                           .show = [] { return true && BREWDETECTION_TYPE == 1; },
                                           .minValue = BD_THRESHOLD_MIN,
                                           .maxValue = BD_THRESHOLD_MAX,
                                           .ptr = (void*)&brewSensitivity};
 
     editableVars["STEAM_MODE"] = {
-        .displayName = F("Steam Mode"), .hasHelpText = false, .helpText = "", .type = kUInt8, .section = sOtherSection, .position = 28, .show = [] { return false; }, .minValue = 0, .maxValue = 1, .ptr = (void*)&steamON};
+        .displayName = F("Steam Mode"), .hasHelpText = false, .helpText = "", .type = kUInt8, .section = sOtherSection, .position = 29, .show = [] { return false; }, .minValue = 0, .maxValue = 1, .ptr = (void*)&steamON};
 
     editableVars["BACKFLUSH_ON"] = {
-        .displayName = F("Backflush"), .hasHelpText = false, .helpText = "", .type = kUInt8, .section = sOtherSection, .position = 29, .show = [] { return false; }, .minValue = 0, .maxValue = 1, .ptr = (void*)&backflushOn};
+        .displayName = F("Backflush"), .hasHelpText = false, .helpText = "", .type = kUInt8, .section = sOtherSection, .position = 30, .show = [] { return false; }, .minValue = 0, .maxValue = 1, .ptr = (void*)&backflushOn};
 
     editableVars["STANDBY_MODE_ON"] = {.displayName = F("Enable Standby Timer"),
                                        .hasHelpText = true,
                                        .helpText = F("Turn heater off after standby time has elapsed."),
                                        .type = kUInt8,
                                        .section = sPowerSection,
-                                       .position = 30,
+                                       .position = 31,
                                        .show = [] { return true; },
                                        .minValue = 0,
                                        .maxValue = 1,
@@ -1493,7 +1496,7 @@ void setup() {
                                           .helpText = F("Time in minutes until the heater is turned off. Timer is reset by brew detection."),
                                           .type = kDouble,
                                           .section = sPowerSection,
-                                          .position = 31,
+                                          .position = 32,
                                           .show = [] { return true; },
                                           .minValue = STANDBY_MODE_TIME_MIN,
                                           .maxValue = STANDBY_MODE_TIME_MAX,
@@ -1501,14 +1504,14 @@ void setup() {
 
 #if FEATURE_SCALE == 1
     editableVars["TARE_ON"] = {
-        .displayName = F("Tare"), .hasHelpText = false, .helpText = "", .type = kUInt8, .section = sScaleSection, .position = 32, .show = [] { return false; }, .minValue = 0, .maxValue = 1, .ptr = (void*)&scaleTareOn};
+        .displayName = F("Tare"), .hasHelpText = false, .helpText = "", .type = kUInt8, .section = sScaleSection, .position = 33, .show = [] { return false; }, .minValue = 0, .maxValue = 1, .ptr = (void*)&scaleTareOn};
 
     editableVars["CALIBRATION_ON"] = {.displayName = F("Calibration"),
                                       .hasHelpText = false,
                                       .helpText = "",
                                       .type = kUInt8,
                                       .section = sScaleSection,
-                                      .position = 33,
+                                      .position = 34,
                                       .show = [] { return false; },
                                       .minValue = 0,
                                       .maxValue = 1,
@@ -1519,7 +1522,7 @@ void setup() {
                                           .helpText = "",
                                           .type = kFloat,
                                           .section = sScaleSection,
-                                          .position = 34,
+                                          .position = 35,
                                           .show = [] { return true; },
                                           .minValue = 0,
                                           .maxValue = 2000,
@@ -1530,7 +1533,7 @@ void setup() {
                                          .helpText = "",
                                          .type = kFloat,
                                          .section = sScaleSection,
-                                         .position = 35,
+                                         .position = 36,
                                          .show = [] { return true; },
                                          .minValue = -100000,
                                          .maxValue = 100000,
@@ -1541,7 +1544,7 @@ void setup() {
                                           .helpText = "",
                                           .type = kFloat,
                                           .section = sScaleSection,
-                                          .position = 36,
+                                          .position = 37,
                                           .show = [] { return SCALE_TYPE == 0; },
                                           .minValue = -100000,
                                           .maxValue = 100000,
@@ -1558,6 +1561,7 @@ void setup() {
 
     // Editable values reported to MQTT
     mqttVars["pidON"] = [] { return &editableVars.at("PID_ON"); };
+    mqttVars["pidONAtWaterEmpty"] = [] { return &editableVars.at("PID_ON_AT_WATEREMPTY"); };
     mqttVars["brewSetpoint"] = [] { return &editableVars.at("BREW_SETPOINT"); };
     mqttVars["brewTempOffset"] = [] { return &editableVars.at("BREW_TEMP_OFFSET"); };
     mqttVars["steamON"] = [] { return &editableVars.at("STEAM_MODE"); };
@@ -1899,7 +1903,7 @@ void looppid() {
     printDisplayTimer();
 #endif
 
-    if (machineState == kPidDisabled || machineState == kWaterEmpty || machineState == kSensorError || machineState == kEmergencyStop || machineState == kEepromError || machineState == kStandby || brewPIDDisabled) {
+    if (machineState == kPidDisabled || (machineState == kWaterEmpty && !pidOnAtWaterEmpty ) || machineState == kSensorError || machineState == kEmergencyStop || machineState == kEepromError || machineState == kStandby || brewPIDDisabled) {
         if (bPID.GetMode() == 1) {
             // Force PID shutdown
             bPID.SetMode(0);
@@ -2090,6 +2094,7 @@ void setBDPIDTunings() {
  */
 int readSysParamsFromStorage(void) {
     if (sysParaPidOn.getStorage() != 0) return -1;
+    if (sysParaPidOnAtWaterEmpty.getStorage() != 0) return -1;
     if (sysParaUsePonM.getStorage() != 0) return -1;
     if (sysParaPidKpStart.getStorage() != 0) return -1;
     if (sysParaPidTnStart.getStorage() != 0) return -1;
@@ -2132,6 +2137,7 @@ int readSysParamsFromStorage(void) {
  */
 int writeSysParamsToStorage(void) {
     if (sysParaPidOn.setStorage() != 0) return -1;
+    if (sysParaPidOnAtWaterEmpty.setStorage() != 0) return -1;
     if (sysParaUsePonM.setStorage() != 0) return -1;
     if (sysParaPidKpStart.setStorage() != 0) return -1;
     if (sysParaPidTnStart.setStorage() != 0) return -1;
