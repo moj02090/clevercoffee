@@ -248,7 +248,7 @@ double standbyModeTime = STANDBY_MODE_TIME;
 
 // system parameter EEPROM storage wrappers (current value as pointer to variable, minimum, maximum, optional storage ID)
 SysPara<uint8_t> sysParaPidOn(&pidON, 0, 1, STO_ITEM_PID_ON);
-SysPara<uint8_t> sysParapidONAtWaterEmpty(&pidONAtWaterEmpty, 0, 1, STO_ITEM_PID_ON_AT_WATEREMPTY);
+SysPara<uint8_t> sysParaPidOnAtWaterEmpty(&pidONAtWaterEmpty, 0, 1, STO_ITEM_PID_ON_AT_WATEREMPTY);
 SysPara<uint8_t> sysParaUsePonM(&usePonM, 0, 1, STO_ITEM_PID_START_PONM);
 SysPara<double> sysParaPidKpStart(&startKp, PID_KP_START_MIN, PID_KP_START_MAX, STO_ITEM_PID_KP_START);
 SysPara<double> sysParaPidTnStart(&startTn, PID_TN_START_MIN, PID_TN_START_MAX, STO_ITEM_PID_TN_START);
@@ -1141,10 +1141,26 @@ void setup() {
     // Initialize the logger
     Logger::init(23);
 
-    editableVars["PID_ON"] = {
-        .displayName = "Enable PID Controller", .hasHelpText = false, .helpText = "", .type = kUInt8, .section = sPIDSection, .position = 1, .show = [] { return true; }, .minValue = 0, .maxValue = 1, .ptr = (void*)&pidON};
-    editableVars["PID_ON_AT_WATEREMPTY"] = {
-        .displayName = "Enable PID Controller at empty Water", .hasHelpText = false, .helpText = "", .type = kUInt8, .section = sPIDSection, .position = 2, .show = [] { return true; }, .minValue = 0, .maxValue = 1, .ptr = (void*)&pidONAtWaterEmpty};
+    editableVars["PID_ON"] = {.displayName = "Enable PID Controller",
+                                      .hasHelpText = false,
+                                      .helpText = "",
+                                      .type = kUInt8,
+                                      .section = sPIDSection,
+                                      .position = 1,
+                                      .show = [] { return true; },
+                                      .minValue = 0,
+                                      .maxValue = 1,
+                                      .ptr = (void*)&pidON};
+    editableVars["PID_ON_AT_WATEREMPTY"] = {.displayName = "Enable heating while water tank is empty",
+                                      .hasHelpText = true,
+                                      .helpText = F("If checked, the PID stays enabled during waterEmpty state."),
+                                      .type = kUInt8,
+                                      .section = sPIDSection,
+                                      .position = 2,
+                                      .show = [] { return true && FEATURE_WATER_SENS == 1; },
+                                      .minValue = 0,
+                                      .maxValue = 1,
+                                      .ptr = (void*)&pidONAtWaterEmpty};
     editableVars["START_USE_PONM"] = {.displayName = F("Enable PonM"),
                                       .hasHelpText = true,
                                       .helpText = F("Use PonM mode (<a href='http://brettbeauregard.com/blog/2017/06/"
@@ -1561,7 +1577,6 @@ void setup() {
 
     // Editable values reported to MQTT
     mqttVars["pidON"] = [] { return &editableVars.at("PID_ON"); };
-    mqttVars["pidONAtWaterEmpty"] = [] { return &editableVars.at("PID_ON_AT_WATEREMPTY"); };
     mqttVars["brewSetpoint"] = [] { return &editableVars.at("BREW_SETPOINT"); };
     mqttVars["brewTempOffset"] = [] { return &editableVars.at("BREW_TEMP_OFFSET"); };
     mqttVars["steamON"] = [] { return &editableVars.at("STEAM_MODE"); };
@@ -1577,6 +1592,11 @@ void setup() {
     mqttVars["aggIMax"] = [] { return &editableVars.at("PID_I_MAX"); };
     mqttVars["steamKp"] = [] { return &editableVars.at("STEAM_KP"); };
     mqttVars["standbyModeOn"] = [] { return &editableVars.at("STANDBY_MODE_ON"); };
+
+    if (FEATURE_WATER_SENS == 1) {
+        mqttVars["pidONAtWaterEmpty"] = [] { return &editableVars.at("PID_ON_AT_WATEREMPTY"); };
+    }
+
 
     if (FEATURE_BREWCONTROL == 1) {
         mqttVars["brewtime"] = [] { return &editableVars.at("BREW_TIME"); };
@@ -1626,6 +1646,7 @@ void setup() {
 #if FEATURE_SCALE == 1
     mqttSensors["currentWeight"] = [] { return weight; };
 #endif
+
 
     initTimer1();
 
@@ -1903,7 +1924,7 @@ void looppid() {
     printDisplayTimer();
 #endif
 
-    if (machineState == kPidDisabled || (machineState == kWaterEmpty && !pidOnAtWaterEmpty ) || machineState == kSensorError || machineState == kEmergencyStop || machineState == kEepromError || machineState == kStandby || brewPIDDisabled) {
+    if (machineState == kPidDisabled || (machineState == kWaterEmpty && !pidONAtWaterEmpty ) || machineState == kSensorError || machineState == kEmergencyStop || machineState == kEepromError || machineState == kStandby || brewPIDDisabled) {
         if (bPID.GetMode() == 1) {
             // Force PID shutdown
             bPID.SetMode(0);
