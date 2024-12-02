@@ -664,6 +664,8 @@ void handleMachineState() {
             break;
 
         case kHotWater:
+            checkHotWaterSwitch();
+
             if (hotWaterOn == 0) {
                 machineState = kPidNormal;
             }
@@ -690,12 +692,14 @@ void handleMachineState() {
             break;
 
         case kSteam:
-            if (hotWaterOn == 1) {
-                machineState = kHotWater;
-            }
+            checkHotWaterSwitch();
 
             if (steamON == 0) {
                 machineState = kPidNormal;
+            }
+
+            if (hotWaterOn == 1) {
+                machineState = kHotWater;
             }
 
             if (emergencyStop) {
@@ -1732,7 +1736,6 @@ void looppid() {
     }
 #endif
 
-    checkHotWaterSwitch();
     checkSteamSwitch();
     checkPowerSwitch();
 
