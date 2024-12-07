@@ -274,7 +274,7 @@ bool brew() {
 
         switch (currBrewState) {
             case kBrewIdle:         // waiting step for brew switch turning on
-                if (currBrewSwitchState == kBrewSwitchShortPressed && machineState != kWaterEmpty) {
+                if (currBrewSwitchState == kBrewSwitchShortPressed && machineState != kWaterEmpty && machineState != kHotWater && machineState != kSteam) {
                     startingTime = millis();
                     timeBrewed = 0; // reset timeBrewed, last brew is still stored
                     LOG(INFO, "Brew timer started");
