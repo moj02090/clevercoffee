@@ -314,7 +314,7 @@ bool displayMachineState() {
         return true;
     }
     // Hot Water
-    else if (machineState == kHotWater && brewSwitchState != kBrewSwitchFlushOff) {
+    else if (machineState == kHotWater) {
         u8g2.clearBuffer();
         u8g2.drawXBMP(0, 12, Hot_Water_Logo_width, Hot_Water_Logo_height, Hot_Water_Logo);
 
