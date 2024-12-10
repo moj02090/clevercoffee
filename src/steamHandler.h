@@ -8,6 +8,9 @@ uint8_t currStateSteamSwitch;
 
 void checkSteamSwitch() {
     if (FEATURE_STEAMSWITCH) {
+        if (machineState == kBrew || machineState == kManualFlush || machineState == kBackflush) { 
+            return;
+        }
         uint8_t steamSwitchReading = steamSwitch->isPressed();
 
         if (STEAMSWITCH_TYPE == Switch::TOGGLE) {
