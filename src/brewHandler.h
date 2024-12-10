@@ -94,6 +94,7 @@ HX711_ADC LoadCell2(PIN_HXDAT2, PIN_HXCLK);
  * @brief Toggle or momentary input for Brew Switch
  */
 void checkbrewswitch() {
+    if ( machineState == kHotWater || machineSTate == kSteam ) { return; }
     brewSwitchReading = brewSwitch->isPressed();
 
     if (BREWSWITCH_TYPE == Switch::TOGGLE) {
