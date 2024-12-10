@@ -16,16 +16,19 @@ int8_t hotWaterOn = 0;
 
 void checkHotWaterSwitch() {
     if (FEATURE_HOTWATERSWITCH) {
+        if (machineState == kBrew || machineState == kManualFlush || machineState == kBackFlush){ 
+            return; 
+        }
         uint8_t hotWaterSwitchReading = hotWaterSwitch->isPressed();
 
         if (HOTWATERSWITCH_TYPE == Switch::TOGGLE) {
             // Set HotWaterState to kHotWaterRunning when waterswitch is HIGH and no allowed maschinestate is active
-            if (hotWaterSwitchReading == HIGH && machineState != kBrew && !(machineState > kSteam)) {
+            if (hotWaterSwitchReading == HIGH && machineState != kWaterEmpty) {
                 currHotWaterState = kHotWaterRunning;
                 LOG(DEBUG, "HotWater pressed currWaterState = kHotWaterRunning");
             }
 
-            if (hotWaterSwitchReading == LOW && hotWaterOn == 1) {
+            if (hotWaterSwitchReading == LOW) {
                 currHotWaterState = kHotWaterIdle;
                 LOG(DEBUG, "HotWater released currWaterState = kHotWaterIdle");
             }
@@ -35,7 +38,7 @@ void checkHotWaterSwitch() {
                 currStateHotWaterSwitch = hotWaterSwitchReading;
 
                 if (currStateHotWaterSwitch == HIGH) {
-                    if (hotWaterOn == 0 && machineState != kBrew && !(machineState > kSteam)) {
+                    if (hotWaterOn == 0 && machineState != kWaterEmpty) {
                         currHotWaterState = kHotWaterRunning;
                         LOG(DEBUG, "HotWater pressed currWaterState = kHotWaterRunning");
                     }
@@ -52,7 +55,6 @@ void checkHotWaterSwitch() {
 bool hotWater() {
     unsigned long currentMillisTemp = millis();
     checkHotWaterSwitch();
-    LOG(TRACE, "currHotWaterState = "+currHotWaterState);
     if (currHotWaterState == kHotWaterIdle) {
         hotWaterOn = 0;
         pumpRelay.off();
